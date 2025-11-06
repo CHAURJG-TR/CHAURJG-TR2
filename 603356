@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>專業圖像編輯器</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+      background: #2c2c2c;
+      color: #ffffff;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    html {
+      height: 100%;
+    }
+
+    .editor-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* 頂部選單列 */
+    .menu-bar {
+      background: #3c3c3c;
+      padding: 8px 16px;
+      border-bottom: 1px solid #555;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .menu-items {
+      display: flex;
+      gap: 15px;
+    }
+
+    .menu-btn {
+      background: #4a4a4a;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+
+    .menu-btn:hover {
+      background: #5a5a5a;
+    }
+
+    /* 主要工作區域 */
+    .main-area {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* 左側工具箱 */
+    .toolbox {
+      width: 80px;
+      background: #3c3c3c;
+      border-right: 1px solid #555;
+      padding: 10px 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .tool-btn {
+      width: 60px;
+      height: 60px;
+      background: #4a4a4a;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.2s;
+      color: white;
+    }
+
+    .tool-btn:hover {
+      background: #5a5a5a;
+    }
+
+    .tool-btn.active {
+      border-color: #0078d4;
+      background: #0078d4;
+    }
+
+    /* 畫布區域 */
+    .canvas-area {
+      flex: 1;
+      background: #2c2c2c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: auto;
+    }
+
+    #canvas {
+      background: white;
+      border: 1px solid #666;
+      cursor: crosshair;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    /* 右側面板 */
+    .right-panel {
+      width: 280px;
+      background: #3c3c3c;
+      border-left: 1px solid #555;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-section {
+      border-bottom: 1px solid #555;
+      padding: 15px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    /* 顏色選擇器 */
+    .color-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .color-picker-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .color-preview {
+      width: 40px;
+      height: 40px;
+      border: 2px solid #666;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .color-input {
+      flex: 1;
+    }
+
+    .color-palette {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .palette-color {
+      width: 25px;
+      height: 25px;
+      border: 1px solid #666;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+
+    .palette-color:hover {
+      border-color: #0078d4;
+    }
+
+    /* 筆刷設定 */
+    .brush-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .control-label {
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      height: 4px;
+      background: #555;
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #0078d4;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .value-display {
+      min-width: 30px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    /* 圖層面板 */
+    .layers-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .layer-item {
+      background: #4a4a4a;
+      margin: 2px 0;
+      padding: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .layer-item.active {
+      background: #0078d4;
+    }
+
+    .layer-visibility {
+      width: 16px;
+      height: 16px;
+      background: #666;
+      border-radius: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .layer-visibility.visible {
+      background: #0078d4;
+      color: white;
+    }
+
+    /* 底部狀態列 */
+    .status-bar {
+      background: #3c3c3c;
+      border-top: 1px solid #555;
+      padding: 5px 15px;
+      font-size: 12px;
+      color: #ccc;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* 新建圖像對話框 */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #3c3c3c;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #555;
+      min-width: 300px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: white;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 6px;
+      background: #2c2c2c;
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: white;
+      font-size: 12px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .modal-btn.primary {
+      background: #0078d4;
+      color: white;
+    }
+
+    .modal-btn.secondary {
+      background: #666;
+      color: white;
+    }
+
+    .modal-btn:hover {
+      opacity: 0.8;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="editor-container"><!-- 頂部選單列 -->
+   <div class="menu-bar">
+    <h1 class="app-title" id="app-title">專業圖像編輯器</h1>
+    <div class="menu-items"><button class="menu-btn" id="newImageBtn">新建圖像</button> <button class="menu-btn" id="openBtn">開啟</button> <button class="menu-btn" id="saveBtn">儲存</button> <button class="menu-btn" id="exportBtn">匯出</button>
+    </div>
+   </div><!-- 主要工作區域 -->
+   <div class="main-area"><!-- 左側工具箱 -->
+    <div class="toolbox">
+     <div class="tool-btn active" data-tool="brush" title="筆刷">
+      🖌️
+     </div>
+     <div class="tool-btn" data-tool="pencil" title="鉛筆">
+      ✏️
+     </div>
+     <div class="tool-btn" data-tool="eraser" title="橡皮擦">
+      🧽
+     </div>
+     <div class="tool-btn" data-tool="bucket" title="油漆桶">
+      🪣
+     </div>
+     <div class="tool-btn" data-tool="eyedropper" title="吸管">
+      💧
+     </div>
+     <div class="tool-btn" data-tool="select" title="選取">
+      📐
+     </div>
+     <div class="tool-btn" data-tool="move" title="移動">
+      ✋
+     </div>
+     <div class="tool-btn" data-tool="text" title="文字">
+      📝
+     </div>
+     <div class="tool-btn" data-tool="line" title="直線">
+      📏
+     </div>
+     <div class="tool-btn" data-tool="rectangle" title="矩形">
+      ⬜
+     </div>
+     <div class="tool-btn" data-tool="circle" title="圓形">
+      ⭕
+     </div>
+     <div class="tool-btn" data-tool="blur" title="模糊">
+      🌫️
+     </div>
+    </div><!-- 畫布區域 -->
+    <div class="canvas-area">
+     <canvas id="canvas" width="800" height="600"></canvas>
+    </div><!-- 右側面板 -->
+    <div class="right-panel"><!-- 顏色選擇 -->
+     <div class="panel-section">
+      <div class="panel-title">
+       顏色
+      </div>
+      <div class="color-section">
+       <div class="color-picker-container">
+        <div class="color-preview" id="colorPreview" style="background: #000000;"></div><input type="color" id="colorPicker" class="color-input" value="#000000">
+       </div>
+       <div class="color-palette" id="colorPalette"></div>
+      </div>
+     </div><!-- 筆刷設定 -->
+     <div class="panel-section">
+      <div class="panel-title">
+       筆刷設定
+      </div>
+      <div class="brush-controls">
+       <div class="control-group"><label class="control-label">大小</label>
+        <div class="slider-container"><input type="range" id="brushSize" min="1" max="100" value="5"> <span class="value-display" id="brushSizeValue">5</span>
+        </div>
+       </div>
+       <div class="control-group"><label class="control-label">不透明度</label>
+        <div class="slider-container"><input type="range" id="opacity" min="0" max="100" value="100"> <span class="value-display" id="opacityValue">100%</span>
+        </div>
+       </div>
+       <div class="control-group"><label class="control-label">硬度</label>
+        <div class="slider-container"><input type="range" id="hardness" min="0" max="100" value="100"> <span class="value-display" id="hardnessValue">100%</span>
+        </div>
+       </div>
+      </div>
+     </div><!-- 圖層面板 -->
+     <div class="panel-section layers-panel">
+      <div class="panel-title">
+       圖層
+      </div>
+      <div id="layersList">
+       <div class="layer-item active">
+        <div class="layer-visibility visible">
+         👁️
+        </div><span>背景</span>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- 底部狀態列 -->
+   <div class="status-bar"><span id="toolStatus">工具: 筆刷</span> <span id="canvasInfo">800 x 600 px</span> <span id="zoomLevel">縮放: 100%</span>
+   </div>
+  </div><!-- 新建圖像對話框 -->
+  <div class="modal" id="newImageModal">
+   <div class="modal-content">
+    <div class="modal-title">
+     新建圖像
+    </div>
+    <div class="form-group"><label class="form-label">寬度 (px)</label> <input type="number" class="form-input" id="canvasWidth" value="800">
+    </div>
+    <div class="form-group"><label class="form-label">高度 (px)</label> <input type="number" class="form-input" id="canvasHeight" value="600">
+    </div>
+    <div class="form-group"><label class="form-label">背景顏色</label> <input type="color" class="form-input" id="backgroundColor" value="#ffffff">
+    </div>
+    <div class="modal-buttons"><button class="modal-btn secondary" id="cancelBtn">取消</button> <button class="modal-btn primary" id="createBtn">建立</button>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      app_title: "專業圖像編輯器",
+      new_image_text: "新建圖像",
+      save_text: "儲存",
+      primary_color: "#0078d4",
+      secondary_color: "#3c3c3c",
+      background_color: "#2c2c2c",
+      text_color: "#ffffff",
+      accent_color: "#666666"
+    };
+
+    // 畫布和上下文
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 工具狀態
+    let currentTool = 'brush';
+    let isDrawing = false;
+    let currentColor = '#000000';
+    let brushSize = 5;
+    let opacity = 100;
+    let hardness = 100;
+    
+    // 繪圖狀態
+    let lastX = 0;
+    let lastY = 0;
+    
+    // 初始化調色盤
+    const colors = [
+      '#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff',
+      '#800000', '#808080', '#800080', '#008000', '#000080', '#808000', '#008080', '#c0c0c0',
+      '#ff8080', '#80ff80', '#8080ff', '#ffff80', '#ff80ff', '#80ffff', '#ffc080', '#c080ff'
+    ];
+    
+    const colorPalette = document.getElementById('colorPalette');
+    colors.forEach(color => {
+      const colorDiv = document.createElement('div');
+      colorDiv.className = 'palette-color';
+      colorDiv.style.backgroundColor = color;
+      colorDiv.addEventListener('click', () => {
+        currentColor = color;
+        document.getElementById('colorPicker').value = color;
+        document.getElementById('colorPreview').style.backgroundColor = color;
+      });
+      colorPalette.appendChild(colorDiv);
+    });
+
+    // 工具選擇
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTool = btn.dataset.tool;
+        document.getElementById('toolStatus').textContent = `工具: ${btn.title}`;
+        
+        // 更新游標
+        switch(currentTool) {
+          case 'brush':
+          case 'pencil':
+            canvas.style.cursor = 'crosshair';
+            break;
+          case 'eraser':
+            canvas.style.cursor = 'grab';
+            break;
+          case 'eyedropper':
+            canvas.style.cursor = 'copy';
+            break;
+          case 'move':
+            canvas.style.cursor = 'move';
+            break;
+          default:
+            canvas.style.cursor = 'crosshair';
+        }
+      });
+    });
+
+    // 顏色選擇器
+    document.getElementById('colorPicker').addEventListener('change', (e) => {
+      currentColor = e.target.value;
+      document.getElementById('colorPreview').style.backgroundColor = currentColor;
+    });
+
+    // 筆刷設定
+    document.getElementById('brushSize').addEventListener('input', (e) => {
+      brushSize = e.target.value;
+      document.getElementById('brushSizeValue').textContent = brushSize;
+    });
+
+    document.getElementById('opacity').addEventListener('input', (e) => {
+      opacity = e.target.value;
+      document.getElementById('opacityValue').textContent = opacity + '%';
+    });
+
+    document.getElementById('hardness').addEventListener('input', (e) => {
+      hardness = e.target.value;
+      document.getElementById('hardnessValue').textContent = hardness + '%';
+    });
+
+    // 繪圖功能
+    function startDrawing(e) {
+      isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      lastX = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+      lastY = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+      
+      if (currentTool === 'eyedropper') {
+        const imageData = ctx.getImageData(lastX, lastY, 1, 1);
+        const pixel = imageData.data;
+        const hex = '#' + [pixel[0], pixel[1], pixel[2]].map(x => x.toString(16).padStart(2, '0')).join('');
+        currentColor = hex;
+        document.getElementById('colorPicker').value = hex;
+        document.getElementById('colorPreview').style.backgroundColor = hex;
+        return;
+      }
+      
+      draw(e);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const currentX = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+      const currentY = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+      
+      ctx.globalAlpha = opacity / 100;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      switch(currentTool) {
+        case 'brush':
+        case 'pencil':
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.strokeStyle = currentColor;
+          ctx.beginPath();
+          ctx.moveTo(lastX, lastY);
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+          break;
+          
+        case 'eraser':
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.beginPath();
+          ctx.moveTo(lastX, lastY);
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+          break;
+      }
+      
+      lastX = currentX;
+      lastY = currentY;
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // 滑鼠事件
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    // 觸控事件
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startDrawing(e);
+    });
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      draw(e);
+    });
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      stopDrawing();
+    });
+
+    // 新建圖像對話框
+    const newImageModal = document.getElementById('newImageModal');
+    document.getElementById('newImageBtn').addEventListener('click', () => {
+      newImageModal.style.display = 'flex';
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      newImageModal.style.display = 'none';
+    });
+
+    document.getElementById('createBtn').addEventListener('click', () => {
+      const width = parseInt(document.getElementById('canvasWidth').value);
+      const height = parseInt(document.getElementById('canvasHeight').value);
+      const bgColor = document.getElementById('backgroundColor').value;
+      
+      canvas.width = width;
+      canvas.height = height;
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, width, height);
+      
+      document.getElementById('canvasInfo').textContent = `${width} x ${height} px`;
+      newImageModal.style.display = 'none';
+    });
+
+    // 儲存功能
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'image.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'image.jpg';
+      link.href = canvas.toDataURL('image/jpeg', 0.9);
+      link.click();
+    });
+
+    // 開啟檔案
+    document.getElementById('openBtn').addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0);
+              document.getElementById('canvasInfo').textContent = `${img.width} x ${img.height} px`;
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    });
+
+    // 初始化畫布
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Element SDK 配置
+    async function onConfigChange(config) {
+      const appTitle = document.getElementById('app-title');
+      const newImageBtn = document.getElementById('newImageBtn');
+      const saveBtn = document.getElementById('saveBtn');
+      
+      appTitle.textContent = config.app_title || defaultConfig.app_title;
+      newImageBtn.textContent = config.new_image_text || defaultConfig.new_image_text;
+      saveBtn.textContent = config.save_text || defaultConfig.save_text;
+      
+      const primaryColor = config.primary_color || defaultConfig.primary_color;
+      document.documentElement.style.setProperty('--primary-color', primaryColor);
+      
+      // 更新工具按鈕活動狀態顏色
+      const activeTools = document.querySelectorAll('.tool-btn.active');
+      activeTools.forEach(tool => {
+        tool.style.borderColor = primaryColor;
+        tool.style.backgroundColor = primaryColor;
+      });
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                config.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_color || defaultConfig.secondary_color,
+              set: (value) => {
+                config.secondary_color = value;
+                window.elementSdk.setConfig({ secondary_color: value });
+              }
+            },
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["app_title", config.app_title || defaultConfig.app_title],
+          ["new_image_text", config.new_image_text || defaultConfig.new_image_text],
+          ["save_text", config.save_text || defaultConfig.save_text]
+        ])
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99a1feac24af8285',t:'MTc2MjQwNDg4Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
